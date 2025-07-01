@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QTableWidget, QTableWi
                                QMessageBox, QInputDialog)
 
 from backend.efibootmgr import get_boot_entries, set_boot_order
+from version import __version__
 
 COLOR_ACTIVE = QColor(70, 125, 70)  # green
 COLOR_DEFAULT = QColor(100, 0, 0)  # red
@@ -19,7 +20,7 @@ HEX_ID_PATTERN = re.compile(r"^[0-9A-Fa-f]{4}$")
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("bootviz - EFI Boot Manager")
+        self.setWindowTitle(f"bootviz {__version__} - EFI Boot Manager")
 
         self.changes_made = False
 
