@@ -42,7 +42,6 @@ See [LICENSE](LICENSE) and [CC BY-NC 4.0](https://creativecommons.org/licenses/b
 - CLI-only mode
 - Import / export boot entries configuration
 - Better error handling and polkit integration
-- Multi-language support
 
 ---
 
