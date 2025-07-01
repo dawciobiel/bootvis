@@ -1,68 +1,53 @@
-# cmd = ['pkexec', '/usr/sbin/efibootmgr']
+import re
 import subprocess
+
+HEX_ID_PATTERN = re.compile(r"^[0-9A-Fa-f]{4}$")
+CMD_EFIBOOTMGR = '/usr/sbin/efibootmgr'
+
 
 def get_boot_entries():
     """
-    Uruchamia pkexec efibootmgr, parsuje output i zwraca:
-    {
-      'entries': [ {'id': '0000', 'active': True, 'description': 'opis'}, ... ],
-      'current_boot': '0000'  # BootCurrent
-    }
+    Retrieve boot entries using efibootmgr.
     """
-    cmd = ['pkexec', '/usr/sbin/efibootmgr']
+    cmd = ['pkexec', CMD_EFIBOOTMGR]
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
         raise RuntimeError(f"efibootmgr error: {result.stderr.strip()}")
 
     entries = []
-    current_boot = None
+    default_boot = None
 
     for line in result.stdout.splitlines():
-        line = line.strip()
-        # Szukamy BootCurrent:
         if line.startswith("BootCurrent:"):
-            # BootCurrent: 0000
-            current_boot = line.split()[1].lower()
-            continue
-        # Linia z boot entries np:
-        # Boot0000* opensuse-secureboot
-        # Boot0001  Windows Boot Manager
-        if line.startswith("Boot"):
-            # rozbij na ID i opis
-            # ID to np "Boot0000*" lub "Boot0001 "
+            default_boot = line.split()[1]
+        elif line.startswith("BootOrder:"):
+            boot_order = line.split()[1].split(',')  # TODO: use boot_order in GUI to show current order
+        elif line.startswith("Boot"):
             parts = line.split(maxsplit=1)
-            if len(parts) < 2:
-                continue
-            raw_id = parts[0]  # np. "Boot0000*" lub "Boot0001"
-            desc = parts[1]
+            if len(parts) > 1:
+                bootnum = parts[0].replace("Boot", "").replace("*", "")
+                desc = parts[1].strip()
+                active = '*' in parts[0]
+                entries.append({'id': bootnum.upper(), 'description': desc, 'active': active})
 
-            # Sprawdź czy aktywny (czyli ma '*')
-            active = raw_id.endswith('*')
-            # Usuń 'Boot' prefix i gwiazdkę
-            boot_id = raw_id.replace('Boot', '').replace('*', '').lower()
+    # Mark default boot entry
+    for entry in entries:
+        entry['default'] = (entry['id'].upper() == default_boot.upper()) if default_boot else False
 
-            entries.append({
-                'id': boot_id,
-                'active': active,
-                'description': desc
-            })
-
-    if current_boot is None:
-        raise RuntimeError("Cannot find BootCurrent entry in efibootmgr output")
-
-    return {
-        'entries': entries,
-        'current_boot': current_boot
-    }
+    return entries
 
 
 def set_boot_order(order):
     """
-    Ustawia kolejność bootowania, order to lista stringów z id, np ['0000', '0001', '0003']
-    Wywołuje: pkexec efibootmgr -o 0000,0001,0003
+    Set new boot order using efibootmgr.
     """
+    # Validate IDs (must be 4-digit hex)
+    for boot_id in order:
+        if not HEX_ID_PATTERN.match(boot_id):
+            raise ValueError(f"Invalid boot ID format: {boot_id} (must be 4 hex digits)")
+
     order_str = ",".join(order)
-    cmd = ['pkexec', 'efibootmgr', '-o', order_str]
+    cmd = ['pkexec', CMD_EFIBOOTMGR, '-o', order_str]
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
-        raise RuntimeError(f"Failed to set boot order: {result.stderr.strip()}")
+        raise RuntimeError(f"Failed to set boot order:\n{result.stderr.strip()}")
