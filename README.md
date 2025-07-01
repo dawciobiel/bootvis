@@ -11,7 +11,7 @@ A simple Linux desktop GUI for managing EFI boot entries using efibootmgr.
 - Planned support for detecting Secure Boot status and EFI partitions
 
 ## Built with
-- Python 3
+- Python 3.13
 - PySide6 (Qt for Python)
 - `subprocess` to interface with `efibootmgr`
 
@@ -42,7 +42,6 @@ See [LICENSE](LICENSE) and [CC BY-NC 4.0](https://creativecommons.org/licenses/b
 - CLI-only mode
 - Import / export boot entries configuration
 - Better error handling and polkit integration
-- Multi-language support
 
 ---
 
