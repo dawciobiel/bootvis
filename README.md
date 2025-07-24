@@ -18,8 +18,8 @@ A simple Linux desktop GUI for managing EFI boot entries using efibootmgr.
 ## Getting Started
 1. Clone this repository:
     ```bash
-    git clone https://github.com/dawciobiel/bootviz.git
-    cd bootviz
+    git clone https://github.com/dawciobiel/efiboot-gui.git
+    cd efiboot-gui
     ```
 2. Install dependencies (example with pip):
     ```bash
